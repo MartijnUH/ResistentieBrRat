@@ -1,5 +1,6 @@
 library(dplyr)
 library(tidyr)
+library(loo)
 library(cmdstanr)
 library(tidybayes)
 library(bayesplot)
@@ -17,7 +18,22 @@ yrange <- 2013:2019
 # define mutant categories
 mcat <- c("W", "M1", "M2", "M3")
 
+# load fits and select the best predictive model using LOO-CV
+files <- list.files("stan/output", full.names = TRUE)
+patterns <- c("multinom-", paste0("multinom2", letters[1:4], "-"))
+loo_list <- 
+  lapply(patterns, function(p) {
+    fit <- as_cmdstan_fit(files[grepl(p, files)])
+    fit$loo()
+  })
+modsel <- loo_compare(loo_list)
+write.csv(modsel, "output/tab/modsel.csv")
+
 # fit summary
+fit <- as_cmdstan_fit("output/multinom2d.csv")
+
+
+
 stan_vars <- fit$metadata()$stan_variables
 keep_vars <- c("bs0", "alpha_u", "rho_u", "alpha_b", "rho_b", 
                "rho_re", "rho_rs", "sigma_re", "sigma_rs")
