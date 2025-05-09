@@ -1,5 +1,6 @@
 library(dplyr)
 library(tidyr)
+library(sf)
 library(loo)
 library(cmdstanr)
 library(tidybayes)
@@ -31,8 +32,6 @@ write.csv(modsel, "output/tab/modsel.csv")
 
 # fit summary
 fit <- as_cmdstan_fit("output/multinom2d.csv")
-
-
 
 stan_vars <- fit$metadata()$stan_variables
 keep_vars <- c("bs0", "alpha_u", "rho_u", "alpha_b", "rho_b", 
@@ -119,8 +118,9 @@ yprops <- tidy_props %>%
 ggplot(yprops) + 
   geom_lineribbon(aes(x = year, y = yprop, ymin = .lower, ymax = .upper, 
                       col = k, fill = k), alpha = 0.2, linewidth = 1) +
-  labs(col = "Proportion of", fill = "Proportion of") +
-  facet_wrap(~k) +
+  scale_y_continuous(limits = c(0, 1)) +
+  scale_x_continuous(breaks = yrange) +
+  labs(y = "Proportion", x = "Year", col = "Proportion of", fill = "Proportion of") +
   theme_bw() +
   theme(legend.position = "bottom")
 ggsave("fig/props_trend.png", width = 12, height = 12, units = "cm", dpi = 300)
